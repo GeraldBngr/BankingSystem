@@ -1,16 +1,19 @@
 package com.bankingsystem.Services;
 
-import com.bankingsystem.Dtos.AccountDto;
 import com.bankingsystem.Dtos.BasicAccountInfoDto;
+import com.bankingsystem.Dtos.CustomerDetailsDto;
 import com.bankingsystem.Dtos.CustomerDto;
+import com.bankingsystem.Dtos.TransactionDto;
 import com.bankingsystem.Entities.Customer;
 import com.bankingsystem.Mappers.AccountMapper;
 import com.bankingsystem.Mappers.CustomerMapper;
+import com.bankingsystem.Mappers.TransactionMapper;
 import com.bankingsystem.Repositories.AccountRepository;
 import com.bankingsystem.Repositories.CustomerRepository;
 import com.bankingsystem.Services.Interfaces.CustomerService;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -23,13 +26,16 @@ public class CustomerServiceImpl implements CustomerService {
     private final CustomerMapper customerMapper;
     private final AccountRepository accountRepository;
     private final AccountMapper accountMapper;
+    private final TransactionMapper transactionMapper;
 
     public CustomerServiceImpl(CustomerRepository customerRepository, CustomerMapper customerMapper, AccountRepository accountRepository,
-                               AccountMapper accountMapper) {
+                               AccountMapper accountMapper,
+                               TransactionMapper transactionMapper) {
         this.customerRepository = customerRepository;
         this.customerMapper = customerMapper;
         this.accountRepository = accountRepository;
         this.accountMapper = accountMapper;
+        this.transactionMapper = transactionMapper;
     }
 
     // Get All Customers
@@ -86,6 +92,24 @@ public class CustomerServiceImpl implements CustomerService {
     public List <BasicAccountInfoDto> getCustomerAccounts(Long customerId) {
         Customer searchedCustomer = customerRepository.findById(customerId).orElseThrow(() -> new RuntimeException("Customer not found"));
         return accountRepository.findByCustomer(searchedCustomer).stream().map(accountMapper::toBasicAccountInfoDto).collect(Collectors.toList());
+    }
+
+    public CustomerDetailsDto getFullDetailsOfCustomer(Long customerId) {
+        Customer customer=customerRepository.findById(customerId).orElseThrow(() -> new RuntimeException("Customer not found"));
+        CustomerDetailsDto customerDetails=new CustomerDetailsDto();
+        customerDetails.setFullName(customer.getFirstName() + " " + customer.getLastName());
+        customerDetails.setPhoneNumber(customer.getPhone());
+        Map <String,List<TransactionDto>> accountsWithTransactions =  new HashMap<>();
+        customer.getAccounts().forEach(account -> {
+            List <TransactionDto> transactions= account.getTransactions()
+                    .stream().map(transactionMapper::toTransactionDto)
+                    .toList();
+
+            accountsWithTransactions.put(account.getIban(), transactions);
+
+        });
+customerDetails.setAccounts(accountsWithTransactions);
+    return customerDetails;
     }
 
 }

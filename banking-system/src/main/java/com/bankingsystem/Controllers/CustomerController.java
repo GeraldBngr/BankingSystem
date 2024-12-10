@@ -2,6 +2,7 @@ package com.bankingsystem.Controllers;
 
 import com.bankingsystem.Dtos.AccountDto;
 import com.bankingsystem.Dtos.BasicAccountInfoDto;
+import com.bankingsystem.Dtos.CustomerDetailsDto;
 import com.bankingsystem.Dtos.CustomerDto;
 import com.bankingsystem.Entities.Customer;
 import com.bankingsystem.Services.CustomerServiceImpl;
@@ -72,6 +73,13 @@ public class CustomerController {
 
         List<BasicAccountInfoDto> accountsOfACustomer = customerService.getCustomerAccounts(customerId);
         return ResponseEntity.ok(accountsOfACustomer);
+    }
+
+    @GetMapping("/{customer_id}/get-full-details")
+    public ResponseEntity<CustomerDetailsDto> getFullDetails(@PathVariable Long customer_id) {
+       CustomerDetailsDto customer_details = customerService.getFullDetailsOfCustomer(customer_id);
+        return ResponseEntity.ok(customer_details);
+
     }
 
 }
